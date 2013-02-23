@@ -1,0 +1,39 @@
+package com.emveyh.ld25;
+
+import com.badlogic.gdx.Gdx;
+import com.emveyh.ld25.entity.EntityManager;
+import com.emveyh.ld25.entity.PlayerEntity;
+import com.emveyh.ld25.map.MapManager;
+import com.emveyh.ld25.map.Tile;
+
+public class InputManager {
+
+	private static final InputManager INSTANCE = new InputManager();
+	
+	public static InputManager getInstance() {
+		return InputManager.INSTANCE;
+	}
+	
+	private InputManager() {}
+	
+	private int selectedX;
+	private int selectedY;
+	
+	public void tick() {
+		
+		if(Gdx.input.justTouched()) {
+			selectedX = (int)(Gdx.input.getX() * (800f/Gdx.graphics.getWidth())) / Globals.getInstance().getTileSize();
+			selectedY = MapManager.getInstance().getMap()[0].length-1 - (int) ( Gdx.input.getY() * (480f/Gdx.graphics.getHeight() ))/ Globals.getInstance().getTileSize() + 2;
+			System.out.println(selectedY);
+			
+			Tile selectedTile = MapManager.getInstance().getMap()[selectedX][selectedY];
+			if(selectedTile.getEntity() != null) {
+				selectedTile.getEntity().onSelection();
+				
+			}
+			
+		}
+		
+	}
+	
+}

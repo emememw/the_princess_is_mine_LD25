@@ -1,0 +1,99 @@
+package com.emveyh.ld25;
+
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Color;
+import com.emveyh.ld25.entity.EntityManager;
+import com.emveyh.ld25.entity.PlayerEntity;
+import com.emveyh.ld25.map.MapManager;
+import com.emveyh.ld25.map.Tile;
+
+public class InputManager {
+
+	private static final InputManager INSTANCE = new InputManager();
+
+	public static InputManager getInstance() {
+		return InputManager.INSTANCE;
+	}
+
+	private InputManager() {
+	}
+
+	private int selectedX;
+	private int selectedY;
+
+	public void tick() {
+
+		if (Globals.getInstance().getState() == GameState.PLAYING) {
+			if (Gdx.input.justTouched()) {
+				selectedX = (int) (Gdx.input.getX() * (800f / Gdx.graphics.getWidth())) / Globals.getInstance().getTileSize();
+				selectedY = MapManager.getInstance().getMap()[0].length - 1 - (int) (Gdx.input.getY() * (480f / Gdx.graphics.getHeight()))
+						/ Globals.getInstance().getTileSize() + 2;
+
+				if (selectedX >= 0 && selectedX < MapManager.getInstance().getMap().length && selectedY >= 0
+						&& selectedY < MapManager.getInstance().getMap()[0].length) {
+					Tile selectedTile = MapManager.getInstance().getMap()[selectedX][selectedY];
+					if (selectedTile.getEntity() != null) {
+						selectedTile.getEntity().onSelection();
+
+					}
+				}
+			}
+		} else if (Globals.getInstance().getState() == GameState.GAME_OVER) {
+			if (SpeechManager.getInstance().allSpeechesDone()) {
+				if (SpeechManager.getInstance().getSpeeches().size == 1) {
+					SpeechManager.getInstance().registerSpeech(
+							new Speech(Globals.getInstance().getFont(), "click to continue ...", 50, 50, 700, 1f, Color.WHITE, 0.05f));
+				}
+				if (Gdx.input.justTouched()) {
+					Globals.getInstance().changeGameState(GameState.TITLE_SCREEN);
+				}
+			}
+
+		} else if (Globals.getInstance().getState() == GameState.WON) {
+			if (SpeechManager.getInstance().allSpeechesDone()) {
+				if (SpeechManager.getInstance().getSpeeches().size == 1) {
+					SpeechManager.getInstance().registerSpeech(
+							new Speech(Globals.getInstance().getFont(), "click to continue ...", 50, 50, 700, 1f, Color.WHITE, 0.05f));
+				}
+				if (Gdx.input.justTouched()) {
+					Globals.getInstance().changeGameState(GameState.TITLE_SCREEN);
+				}
+			}
+
+		} else if(Globals.getInstance().getState() == GameState.TITLE_SCREEN && !TitleScreen.getInstance().isShowInstructions()) {
+			
+			if(Gdx.input.getX()* (800f / Gdx.graphics.getWidth()) > 70 && Gdx.input.getX()* (800f / Gdx.graphics.getWidth()) < 350) {
+				
+				if(Gdx.input.getY() * (480f / Gdx.graphics.getHeight()) > 150 && Gdx.input.getY() * (480f / Gdx.graphics.getHeight()) < 200) {
+					TitleScreen.getInstance().setHoveredIndex(1);
+				} else if(Gdx.input.getY() * (480f / Gdx.graphics.getHeight()) > 200 && Gdx.input.getY() * (480f / Gdx.graphics.getHeight()) < 250) {
+					TitleScreen.getInstance().setHoveredIndex(2);
+				} else if(Gdx.input.getY() * (480f / Gdx.graphics.getHeight()) > 250 && Gdx.input.getY() * (480f / Gdx.graphics.getHeight()) < 300) {
+					TitleScreen.getInstance().setHoveredIndex(3);
+				} else if(Gdx.input.getY() * (480f / Gdx.graphics.getHeight()) > 300 && Gdx.input.getY() * (480f / Gdx.graphics.getHeight()) < 350) {
+					TitleScreen.getInstance().setHoveredIndex(4);
+				} else {
+					TitleScreen.getInstance().setHoveredIndex(-1);
+				}
+				
+				if(TitleScreen.getInstance().getHoveredIndex() != -1 && Gdx.input.justTouched()) {
+					if(TitleScreen.getInstance().getHoveredIndex() == 1) {
+						TitleScreen.getInstance().newGameClicked();
+					} else if(TitleScreen.getInstance().getHoveredIndex() == 2) {
+						TitleScreen.getInstance().instructionClicked();
+					} else if(TitleScreen.getInstance().getHoveredIndex() == 3) {
+						TitleScreen.getInstance().toggleMusicClicked();
+					} else if(TitleScreen.getInstance().getHoveredIndex() == 4) {
+						TitleScreen.getInstance().quitClicked();
+					}
+				}
+				
+			} else {
+				TitleScreen.getInstance().setHoveredIndex(-1);
+			}
+			
+		}
+ 
+	}
+
+}

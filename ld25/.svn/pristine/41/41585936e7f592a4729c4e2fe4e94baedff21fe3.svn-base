@@ -1,0 +1,44 @@
+package com.emveyh.ld25.map;
+
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.emveyh.ld25.Globals;
+import com.emveyh.ld25.Renderable;
+
+public class Tile implements Renderable {
+	
+	private TextureRegion texture;
+	private boolean accessible;
+	private float size;
+	
+	public Tile(TextureRegion texture, boolean accessible) {
+		this.texture = texture;
+		this.accessible = accessible;
+		this.size = 32f;
+	}
+	
+	@Override
+	public void render(SpriteBatch batch, float x, float y) {
+		batch.draw(texture, x, y, size, size);
+	}
+
+	public boolean isAccessible() {
+		return accessible;
+	}
+
+	public void setAccessible(boolean accessible) {
+		this.accessible = accessible;
+	}
+
+	public TextureRegion getTexture() {
+		return texture;
+	}
+	
+	
+	
+	
+	
+	
+	
+
+}

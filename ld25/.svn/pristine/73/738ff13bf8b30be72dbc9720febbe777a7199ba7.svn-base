@@ -1,0 +1,64 @@
+package com.emveyh.ld25.entity;
+
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.utils.Array;
+import com.emveyh.ld25.map.MapManager;
+import com.emveyh.ld25.map.Tile;
+
+public class EntityManager {
+
+	private static final EntityManager INSTANCE = new EntityManager();
+	
+	public static EntityManager getInstance() {
+		return EntityManager.INSTANCE;
+	}
+	
+	private EntityManager() {}
+	
+	private Array<Entity> entities = new Array<Entity>();
+	
+	private PlayerEntity selectedPlayerEntity;
+	
+	
+	public void registerEntity(Entity entity) {
+		entities.add(entity);
+	}
+	
+	public void unregisterEntity(Entity entity) {
+		entities.removeValue(entity, false);
+		Tile tile = MapManager.getInstance().getTileAtFloatPoint(entity.getX(), entity.getY());
+		if(tile != null) {
+			tile.setEntity(null);
+		}
+	}
+
+	public Array<Entity> getEntities() {
+		return entities;
+	}
+	
+	public void renderEntities(SpriteBatch batch) {
+		for(Entity entity : entities) {
+			entity.draw(batch);
+		}
+	}
+	
+	public void tickEntities() {
+		for(Entity entity : entities) {
+			entity.tick();
+		}
+	}
+
+	public PlayerEntity getSelectedPlayerEntity() {
+		return selectedPlayerEntity;
+	}
+
+	public void setSelectedPlayerEntity(PlayerEntity selectedPlayerEntity) {
+		this.selectedPlayerEntity = selectedPlayerEntity;
+	}
+	
+
+	
+	
+	
+	
+}

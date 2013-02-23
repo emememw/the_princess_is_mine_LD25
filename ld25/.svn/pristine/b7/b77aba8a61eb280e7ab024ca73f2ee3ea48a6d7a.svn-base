@@ -1,0 +1,23 @@
+package com.emveyh.ld25.entity;
+
+import com.badlogic.gdx.Gdx;
+import com.emveyh.ld25.Coord;
+import com.emveyh.ld25.TextureManager;
+
+public class PlayerEntity extends Entity {
+
+	public PlayerEntity() {
+		super(64, 64, TextureManager.getInstance().getSprites()[0][0]);
+	}
+	
+	@Override
+	public void tickLogic() {
+		
+		if(Gdx.input.isTouched()) {
+			//this.moveToPoint(Gdx.input.getX() * (800f/Gdx.graphics.getWidth()), Gdx.graphics.getHeight() - Gdx.input.getY() * (480f/Gdx.graphics.getHeight()), this.speed);
+			this.setDestination(new Coord(Gdx.input.getX() * (800f/Gdx.graphics.getWidth()), Gdx.graphics.getHeight() - Gdx.input.getY() * (480f/Gdx.graphics.getHeight())));
+		}
+		
+	}
+
+}

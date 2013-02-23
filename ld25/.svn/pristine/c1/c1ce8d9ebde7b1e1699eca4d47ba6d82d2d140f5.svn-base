@@ -1,0 +1,31 @@
+package com.emveyh.ld25;
+
+public enum OverlordSpeeches {
+
+	PRINCESS("the princess is mine!!"),
+	KILL("kill these intruders!"),
+	FOOL("you fools! she is mine!"),
+	SURIVE("don't let anyone survive!"),
+	DUNGEON("get out of my dungeon!"),
+	DEATH("death upon all of you!"),
+	TEAR("tear them apart!"),
+	DIE("you are going to die"),
+	CAKE("we need more cake!");
+	
+	private String text;
+	
+	private OverlordSpeeches(String text) {
+		this.text = text.toUpperCase();
+	}
+
+	public String getText() {
+		return text;
+	}
+
+	public void setText(String text) {
+		this.text = text;
+	}
+	
+	
+	
+}

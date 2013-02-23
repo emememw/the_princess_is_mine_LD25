@@ -1,0 +1,60 @@
+package com.emveyh.ld25;
+
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
+
+public class TextureManager {
+
+	private static final TextureManager INSTANCE = new TextureManager();
+	
+	public static TextureManager getInstance() {
+		return TextureManager.INSTANCE;
+	}
+	
+	private TextureManager() {}
+	
+	private TextureRegion[][] sprites;
+	private Texture spritesTexture;
+	
+	private TextureRegion[][] tiles;
+	private Texture tilesTexture;
+	
+	public void init() {
+		
+		spritesTexture = new  Texture(Gdx.files.internal("data/sprites.png"));
+		fillTextureRegionArray(spritesTexture, sprites);
+		
+		tilesTexture = new  Texture(Gdx.files.internal("data/tiles.png"));
+		fillTextureRegionArray(tilesTexture, tiles);
+		
+	}
+	
+	private void fillTextureRegionArray(Texture texture, TextureRegion[][] textureRegionArray) {
+		
+		textureRegionArray = new TextureRegion[texture.getWidth()/Globals.getInstance().getTileSize()][texture.getHeight()/Globals.getInstance().getTileSize()];
+		
+		for(int y = 0; y < textureRegionArray[0].length; y++) {
+			for(int x = 0; x < textureRegionArray.length; x++) {
+				textureRegionArray[x][y] = new TextureRegion(texture, x*Globals.getInstance().getTileSize(), y*Globals.getInstance().getTileSize(), Globals.getInstance().getTileSize(), Globals.getInstance().getTileSize());
+			}
+		}
+		
+	}
+	
+	public void dispose() {
+		spritesTexture.dispose();
+	}
+
+	public TextureRegion[][] getSprites() {
+		return sprites;
+	}
+
+	public TextureRegion[][] getTiles() {
+		return tiles;
+	}
+	
+	
+	
+	
+}

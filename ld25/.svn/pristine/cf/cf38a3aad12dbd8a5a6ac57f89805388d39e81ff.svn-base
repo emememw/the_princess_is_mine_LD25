@@ -1,0 +1,95 @@
+package com.emveyh.ld25;
+
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+
+public class TitleScreen {
+
+	private static final TitleScreen INSTANCE = new TitleScreen();
+	
+	public static TitleScreen getInstance() {
+		return TitleScreen.INSTANCE;
+	}
+	
+	private TitleScreen() {}
+	
+	private int hoveredIndex = -1;
+	
+	public void render(SpriteBatch batch) {
+		
+		Globals.getInstance().getFont().setColor(Color.WHITE);
+		Globals.getInstance().getFont().setScale(1f);
+		Globals.getInstance().getFont().draw(batch, "- THE PRINCESS IS MINE -", 10, 400);
+		Globals.getInstance().getFont().setScale(0.5f);
+		
+		if(hoveredIndex == 1) {
+			Globals.getInstance().getFont().setColor(Color.ORANGE);
+		} else {
+			Globals.getInstance().getFont().setColor(Color.WHITE);
+		}
+		Globals.getInstance().getFont().draw(batch, "start new game", 100, 300);
+		if(hoveredIndex == 2) {
+			Globals.getInstance().getFont().setColor(Color.ORANGE);
+		} else {
+			Globals.getInstance().getFont().setColor(Color.WHITE);
+		}
+		Globals.getInstance().getFont().draw(batch, "instructions", 100, 250);
+		if(hoveredIndex == 3) {
+			Globals.getInstance().getFont().setColor(Color.ORANGE);
+		} else {
+			Globals.getInstance().getFont().setColor(Color.WHITE);
+		}
+		Globals.getInstance().getFont().draw(batch, "toggle music", 100, 200);
+		if(hoveredIndex == 4) {
+			Globals.getInstance().getFont().setColor(Color.ORANGE);
+		} else {
+			Globals.getInstance().getFont().setColor(Color.WHITE);
+		}
+		Globals.getInstance().getFont().draw(batch, "quit", 100, 150);
+		
+		batch.draw(TextureManager.getInstance().getSprites()[2][1], 500, 160, 32, 32);
+		batch.draw(TextureManager.getInstance().getSprites()[5][1], 515, 125, 32, 32);
+		batch.draw(TextureManager.getInstance().getSprites()[7][1], 470, 145, 32, 32);
+		batch.draw(TextureManager.getInstance().getSprites()[10][1], 485, 100, 32, 32);
+		
+		batch.draw(TextureManager.getInstance().getSprites()[3][0], 650, 150, 32, 32);
+		batch.draw(TextureManager.getInstance().getSprites()[0][0], 690, 160, 32, 32);
+		batch.draw(TextureManager.getInstance().getSprites()[0][0], 680, 125, 32, 32);
+		batch.draw(TextureManager.getInstance().getSprites()[8][0], 660, 190, 32, 32);
+		
+		Globals.getInstance().getFont().setColor(Color.WHITE);
+		Globals.getInstance().getFont().setScale(0.5f);
+		Globals.getInstance().getFont().draw(batch, "Ludum Dare 25 - by emveyh - December 2012", 60, 20);
+		
+	}
+	
+	public void tick() {
+		
+	}
+	
+	public void setHoveredIndex(int index){
+		this.hoveredIndex = index;
+	}
+
+	public int getHoveredIndex() {
+		return hoveredIndex;
+	}
+	
+	public void newGameClicked() {
+		Globals.getInstance().changeGameState(GameState.PLAYING);
+	}
+	
+	public void toggleMusicClicked() {
+		Globals.getInstance().toggleMusic();
+	}
+	
+	public void quitClicked() {
+		Gdx.app.exit();
+	}
+	
+	public void instructionClicked() {
+		System.out.println("bla");
+	}
+	
+}

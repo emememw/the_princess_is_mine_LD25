@@ -1,0 +1,49 @@
+package com.emveyh.ld25.map;
+
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.Rectangle;
+import com.emveyh.ld25.Globals;
+import com.emveyh.ld25.Renderable;
+
+public class Tile extends Rectangle implements Renderable {
+	
+	private TextureRegion texture;
+	private boolean accessible;
+	private float size;
+	
+	public Tile(TextureRegion texture, boolean accessible, int x, int y) {
+		this.texture = texture;
+		this.accessible = accessible;
+		this.size = Globals.getInstance().getTileSize();
+		this.setWidth(size);
+		this.setHeight(size);
+		this.setX(x*size);
+		this.setY(y*size);
+	}
+	
+	@Override
+	public void render(SpriteBatch batch, float x, float y) {
+		batch.draw(texture, x, y, size, size);
+	}
+
+	public boolean isAccessible() {
+		return accessible;
+	}
+
+	public void setAccessible(boolean accessible) {
+		this.accessible = accessible;
+	}
+
+	public TextureRegion getTexture() {
+		return texture;
+	}
+	
+	
+	
+	
+	
+	
+	
+
+}

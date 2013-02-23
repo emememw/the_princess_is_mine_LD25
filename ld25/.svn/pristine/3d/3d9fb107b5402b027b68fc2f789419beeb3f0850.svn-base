@@ -1,0 +1,12 @@
+package com.emveyh.ld25.entity;
+
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.emveyh.ld25.TextureManager;
+
+public class BasicEnemy extends Entity{
+
+	public BasicEnemy() {
+		super(128, 128, TextureManager.getInstance().getSprites()[0][0]);
+	}
+
+}

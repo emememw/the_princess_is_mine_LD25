@@ -1,0 +1,63 @@
+package com.emveyh.ld25;
+
+import com.badlogic.gdx.ApplicationListener;
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.GL10;
+import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.Texture.TextureFilter;
+import com.badlogic.gdx.graphics.g2d.Sprite;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.emveyh.ld25.map.MapManager;
+
+public class GdxGame implements ApplicationListener {
+	private OrthographicCamera camera;
+	private SpriteBatch batch;
+	
+	@Override
+	public void create() {		
+		float w = Gdx.graphics.getWidth();
+		float h = Gdx.graphics.getHeight();
+		
+		camera = new OrthographicCamera();
+		camera.setToOrtho(false, 800, 480);
+		batch = new SpriteBatch();
+		
+		TextureManager.getInstance().init();
+		MapManager.getInstance().init();
+		
+	//	texture = new Texture(Gdx.files.internal("data/libgdx.png"));
+		
+	}
+
+	@Override
+	public void dispose() {
+		batch.dispose();
+	//	texture.dispose();
+	}
+
+	@Override
+	public void render() {		
+		Gdx.gl.glClearColor(1, 1, 1, 1);
+		Gdx.gl.glClear(GL10.GL_COLOR_BUFFER_BIT);
+		
+		batch.setProjectionMatrix(camera.combined);
+		batch.begin();
+	//	sprite.draw(batch);
+		MapManager.getInstance().renderMap(batch);
+		batch.end();
+	}
+
+	@Override
+	public void resize(int width, int height) {
+	}
+
+	@Override
+	public void pause() {
+	}
+
+	@Override
+	public void resume() {
+	}
+}

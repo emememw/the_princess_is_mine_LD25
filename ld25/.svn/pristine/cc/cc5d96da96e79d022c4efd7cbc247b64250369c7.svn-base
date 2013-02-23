@@ -1,0 +1,20 @@
+package com.emveyh.ld25;
+
+public class Globals {
+
+	private static final Globals INSTANCE = new Globals();
+	
+	public static Globals getInstance() {
+		return Globals.INSTANCE;
+	}
+	
+	private Globals() {}
+	
+	private int tileSize = 32;
+	
+	public int getTileSize () {
+		return tileSize;
+	}
+	
+	
+}

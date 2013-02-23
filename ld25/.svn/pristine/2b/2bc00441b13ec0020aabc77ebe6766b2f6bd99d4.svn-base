@@ -1,0 +1,160 @@
+package com.emveyh.ld25;
+
+import java.awt.Font;
+
+import com.badlogic.gdx.ApplicationListener;
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input.Keys;
+import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.GL10;
+import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.bitfire.postprocessing.PostProcessor;
+import com.bitfire.postprocessing.effects.Bloom;
+import com.bitfire.postprocessing.effects.CrtMonitor;
+import com.bitfire.postprocessing.effects.Vignette;
+import com.bitfire.utils.ShaderLoader;
+import com.emveyh.ld25.entity.EntityManager;
+import com.emveyh.ld25.map.MapManager;
+
+public class GdxGame implements ApplicationListener {
+	private OrthographicCamera camera;
+	private SpriteBatch batch;
+
+	private PostProcessor postProcessor;
+
+	
+
+	@Override
+	public void create() {
+		float w = Gdx.graphics.getWidth();
+		float h = Gdx.graphics.getHeight();
+
+		camera = new OrthographicCamera();
+		camera.setToOrtho(false, 800, 480);
+		batch = new SpriteBatch();
+
+		TextureManager.getInstance().init();
+		MapManager.getInstance().init();
+		AudioManager.getInstance().init();
+		AudioManager.getInstance().getMusic().play();
+
+		ShaderLoader.BasePath = "data/shaders/";
+		postProcessor = new PostProcessor(false, false, true);
+
+		CrtMonitor crt = new CrtMonitor(false, false);
+		Vignette vig = new Vignette(false);
+		Bloom bloom = new Bloom((int) (Gdx.graphics.getWidth() * 0.25f), (int) (Gdx.graphics.getHeight() * 0.25f));
+		bloom.setBloomIntesity(0.7f);
+		vig.setIntensity(0.5f);
+
+		postProcessor.addEffect(crt);
+		postProcessor.addEffect(vig);
+		postProcessor.addEffect(bloom);
+
+		Globals.getInstance().setFont(new BitmapFont(Gdx.files.internal("data/ps2_border.fnt"), Gdx.files.internal("data/ps2_border.png"), false));
+
+		SpeechManager.getInstance().init();
+
+		//
+		Globals.getInstance().changeGameState(GameState.WON);
+	}
+
+	@Override
+	public void dispose() {
+		batch.dispose();
+		// texture.dispose();
+	}
+
+	@Override
+	public void render() {
+		Gdx.gl.glClearColor(0, 0, 0, 0);
+		Gdx.gl.glClear(GL10.GL_COLOR_BUFFER_BIT);
+
+		postProcessor.capture();
+		batch.setProjectionMatrix(camera.combined);
+		batch.begin();
+		if (Globals.getInstance().getState() == GameState.PLAYING) {
+			// render
+			
+			MapManager.getInstance().renderMap(batch);
+			EntityManager.getInstance().renderEntities(batch);
+			Globals.getInstance().getFont().setColor(Color.WHITE);
+			Globals.getInstance().getFont().setScale(0.5f);
+			Globals.getInstance().getFont().draw(batch, "Wave " + MapManager.getInstance().getCurrentWaveIndex() + " / 10", 10, 450);
+			// font.draw(batch, "120 Gold", 250, 450);
+			batch.draw(TextureManager.getInstance().getSprites()[8][0], 726, 416, 64, 64);
+			Globals.getInstance().getFont().setScale(0.4f);
+			Globals.getInstance().getFont().setColor(Color.RED);
+			// font.draw(batch, "THE PRINCESS IS MINE!!", 430, 450);
+			
+			
+		} else if(Globals.getInstance().getState() == GameState.GAME_OVER) {
+			
+			batch.draw(TextureManager.getInstance().getSprites()[3][0], 350, 240, 64, 64);
+			batch.draw(TextureManager.getInstance().getSprites()[1][0], 280, 240, 64, 64);
+			batch.draw(TextureManager.getInstance().getSprites()[10][1], 420, 240, 64, 64);
+			batch.draw(TextureManager.getInstance().getSprites()[2][1], 310, 170, 64, 64);
+			batch.draw(TextureManager.getInstance().getSprites()[6][1], 380, 170, 64, 64);
+			
+		} else if(Globals.getInstance().getState() == GameState.TITLE_SCREEN) {
+			
+			TitleScreen.getInstance().render(batch);
+			
+		} else if(Globals.getInstance().getState() == GameState.WON) {
+			
+			batch.draw(TextureManager.getInstance().getSprites()[3][0], 350, 240, 64, 64);
+			batch.draw(TextureManager.getInstance().getSprites()[0][0], 280, 240, 64, 64);
+			batch.draw(TextureManager.getInstance().getSprites()[0][0], 420, 240, 64, 64);
+			batch.draw(TextureManager.getInstance().getSprites()[8][0], 310, 170, 64, 64);
+			batch.draw(TextureManager.getInstance().getSprites()[0][0], 380, 170, 64, 64);
+			
+		}
+		
+		SpeechManager.getInstance().render(batch);
+		batch.end();
+		
+		
+
+		postProcessor.render();
+		
+		
+		
+		InputManager.getInstance().tick();
+		SpeechManager.getInstance().tick();
+		
+		if (Globals.getInstance().getState() == GameState.PLAYING) {
+			// logic
+			MapManager.getInstance().tick();
+			
+			EntityManager.getInstance().tickEntities();
+			
+			if(Gdx.input.isKeyPressed(Keys.ESCAPE)) {
+				Globals.getInstance().changeGameState(GameState.TITLE_SCREEN);
+			}
+			
+		} else if(Globals.getInstance().getState() == GameState.GAME_OVER) {
+			
+		} else if(Globals.getInstance().getState() == GameState.TITLE_SCREEN) {
+			
+		} else if(Globals.getInstance().getState() == GameState.WON) {
+			
+		}
+		
+		
+
+	}
+
+	@Override
+	public void resize(int width, int height) {
+	}
+
+	@Override
+	public void pause() {
+	}
+
+	@Override
+	public void resume() {
+	}
+}

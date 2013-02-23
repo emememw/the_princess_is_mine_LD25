@@ -1,0 +1,263 @@
+package com.emveyh.ld25.map;
+
+import java.util.Random;
+
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.math.Rectangle;
+import com.emveyh.ld25.AudioManager;
+import com.emveyh.ld25.GameState;
+import com.emveyh.ld25.Globals;
+import com.emveyh.ld25.MapCoord;
+import com.emveyh.ld25.entity.BasicEnemy;
+import com.emveyh.ld25.entity.DmgUpgrade;
+import com.emveyh.ld25.entity.EnemyType;
+import com.emveyh.ld25.entity.Entity;
+import com.emveyh.ld25.entity.EntityManager;
+import com.emveyh.ld25.entity.HealOrb;
+import com.emveyh.ld25.entity.HealthUpgrade;
+import com.emveyh.ld25.entity.PlayerEntity;
+import com.emveyh.ld25.entity.PrincessInACage;
+
+public class MapManager {
+
+	private static final MapManager INSTANCE = new MapManager();
+
+	public static MapManager getInstance() {
+		return MapManager.INSTANCE;
+	}
+
+	private MapManager() {
+	}
+
+	private Tile[][] map;
+	private Rectangle collisionRectangle;
+
+	private float spawnTime = 0;
+	private float spawnTrigger = 3f;
+
+	private int enemyCount = 0;
+
+	private int currentWaveIndex = 0;
+	private Wave currentWave;
+
+	private float healOrbSpawnTime = 0;
+	private float healOrbSpawnTrigger = 5;
+
+	private Random random = new Random();
+
+	public void init() {
+
+		map = new Tile[25][13];
+
+		for (int x = 0; x < map.length; x++) {
+			for (int y = 0; y < map[x].length; y++) {
+
+				if ((x == 0 || y == 0 || x == map.length - 1 || y == map[0].length - 1) && x != 11 && x != 12 && x != 13 && y != 6 && y != 5 && y != 7) {
+					map[x][y] = new WallTile(x, y);
+				} else {
+					map[x][y] = new FloorTile(x, y);
+				}
+
+				if (x == 5 && y == 3) {
+					map[x][y] = new WallTile(x, y);
+				}
+				if (x == 19 && y == 3) {
+					map[x][y] = new WallTile(x, y);
+				}
+
+				if (x == 5 && y == 9) {
+					map[x][y] = new WallTile(x, y);
+				}
+				if (x == 19 && y == 9) {
+					map[x][y] = new WallTile(x, y);
+				}
+
+			}
+		}
+
+		// generate entities
+		// player
+		EntityManager.getInstance().registerEntity(new PlayerEntity(9, 6, "nr1"));
+		EntityManager.getInstance().registerEntity(new PlayerEntity(15, 6, "nr2"));
+		EntityManager.getInstance().registerEntity(new PlayerEntity(12, 3, "nr3"));
+
+		// princess
+		EntityManager.getInstance().registerEntity(new PrincessInACage());
+		
+		currentWaveIndex = 1;
+		currentWave = Wave.Wave1;
+		enemyCount = 0;
+
+	}
+
+	public Tile[][] getMap() {
+		return map;
+	}
+
+	public void renderMap(SpriteBatch batch) {
+
+		for (int x = 0; x < map.length; x++) {
+			for (int y = 0; y < map[x].length; y++) {
+				map[x][y].render(batch, x * 32, y * 32);
+			}
+		}
+
+	}
+
+	public Tile detectCollision(float x, float y, float width, float height, Entity askingEntity) {
+		Tile result = null;
+		collisionRectangle = new Rectangle(x + 1, y + 1, width - 2, height - 2);
+
+		outer: for (int mapX = 0; mapX < map.length; mapX++) {
+			for (int mapY = 0; mapY < map[mapX].length; mapY++) {
+				if (map[mapX][mapY].overlaps(collisionRectangle)) {
+					if (!map[mapX][mapY].isAccessible() || map[mapX][mapY].occupiedByOtherEntity(askingEntity)) {
+						result = map[mapX][mapY];
+						break outer;
+					}
+				}
+			}
+		}
+
+		return result;
+	}
+
+	public Tile getTileAtFloatPoint(float x, float y) {
+		// @TODO check
+		return map[(int) x / Globals.getInstance().getTileSize()][(int) y / Globals.getInstance().getTileSize()];
+
+	}
+
+	public void tick() {
+
+		for (int x = 0; x < map.length; x++) {
+			for (int y = 0; y < map[x].length; y++) {
+
+				map[x][y].tick();
+
+			}
+		}
+
+		if (currentWave == null) {
+			initNextWave();
+		}
+
+		if (spawnTime < spawnTrigger) {
+			spawnTime += Gdx.graphics.getDeltaTime();
+		} else {
+			spawnTime = 0;
+			spawnEnemy();
+		}
+
+		if (healOrbSpawnTime < healOrbSpawnTrigger) {
+			healOrbSpawnTime += Gdx.graphics.getDeltaTime();
+		} else {
+			healOrbSpawnTime = 0;
+			healOrbSpawnTrigger = random.nextInt(10) + 2;
+			spawnUpgrades();
+
+		}
+
+	}
+
+	public void spawnUpgrades() {
+
+		MapCoord spawnCoord = new MapCoord(-1, -1);
+		while (spawnCoord.getX() == -1 && spawnCoord.getY() == -1) {
+
+			Tile tile = map[random.nextInt(map.length - 1)][random.nextInt(map[0].length - 1)];
+			if (tile.getEntity() == null && tile.isAccessible() && tile.getX() > 0 && tile.getY() > 0 && tile.getX() > map.length-1 && tile.getY() > map[0].length-1) {
+				spawnCoord.setX(tile.getMapCoord().getX());
+				spawnCoord.setY(tile.getMapCoord().getY());
+			}
+		}
+
+		int chance = random.nextInt(100);
+		if(chance < 30) {
+			EntityManager.getInstance().registerEntity(new DmgUpgrade(spawnCoord.getX(), spawnCoord.getY()));
+		} else if(chance < 50) {
+			EntityManager.getInstance().registerEntity(new HealthUpgrade(spawnCoord.getX(), spawnCoord.getY()));
+		} else {
+			EntityManager.getInstance().registerEntity(new HealOrb(spawnCoord.getX(), spawnCoord.getY()));
+		}
+		AudioManager.getInstance().getUpgradeSpawn().play();
+
+	}
+
+	public void spawnEnemy() {
+		if (currentWave != null) {
+			if (enemyCount < currentWave.getSpawnAmount()) {
+				
+				EnemyType enemyType = null;
+				if(currentWave == Wave.Wave1) {
+					enemyType = EnemyType.SILVER_KNIGHT;
+				} else if(currentWave == Wave.Wave2) {
+					enemyType = EnemyType.BLUE_KNIGHT;
+				}else  if(currentWave == Wave.Wave3) {
+					enemyType = EnemyType.RED_MAGE;
+				} else  if(currentWave == Wave.Wave4) {
+					enemyType = EnemyType.YELLOW_MAGE;
+				} else  if(currentWave == Wave.Wave5) {
+					enemyType = EnemyType.PRINCE;
+				} else  if(currentWave == Wave.Wave6) {
+					enemyType = EnemyType.ROGUE;
+				} else  if(currentWave == Wave.Wave7) {
+					enemyType = EnemyType.DWARF;
+				} else  if(currentWave == Wave.Wave8) {
+					enemyType = EnemyType.BARBARIAN;
+				} else  if(currentWave == Wave.Wave9) {
+					enemyType = EnemyType.GOLDEN_KNIGHT;
+				} 
+				
+				MapEntrance entrance = MapEntrance.values()[random.nextInt(MapEntrance.values().length)];
+				if (entrance == MapEntrance.LEFT) {
+					EntityManager.getInstance().registerEntity(new BasicEnemy(0, 6, enemyType));
+				} else if (entrance == MapEntrance.RIGHT) {
+					EntityManager.getInstance().registerEntity(new BasicEnemy(24, 6, enemyType));
+				} else if (entrance == MapEntrance.TOP) {
+					EntityManager.getInstance().registerEntity(new BasicEnemy(12, 11, enemyType));
+				} else {
+					EntityManager.getInstance().registerEntity(new BasicEnemy(12, 0, enemyType));
+				}
+				enemyCount++;
+			} else if (EntityManager.getInstance().allEnemiesDead()) {
+				
+					onWaveDone();
+				
+			}
+		}
+	}
+
+	public void initNextWave() {
+		currentWaveIndex++;
+		this.currentWave = getCurrentWave();
+		AudioManager.getInstance().getNextWave().play();
+	}
+
+	public Wave getCurrentWave() {
+		Wave result = null;
+		for (Wave wave : Wave.values()) {
+			if (wave.getIndex() == currentWaveIndex) {
+				result = wave;
+				break;
+			}
+		}
+		return result;
+	}
+
+	private void onWaveDone() {
+		// showText
+		if(currentWave == Wave.Wave9) {
+			//winning!
+			Globals.getInstance().changeGameState(GameState.WON);
+		} else {
+			initNextWave();
+		}
+	}
+
+	public int getCurrentWaveIndex() {
+		return currentWaveIndex;
+	}
+
+}

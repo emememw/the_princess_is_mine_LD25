@@ -1,0 +1,11 @@
+package com.emveyh.ld25.map;
+
+import com.emveyh.ld25.TextureManager;
+
+public class WallTile extends Tile {
+
+	public WallTile() {
+		super(TextureManager.getInstance().getTiles()[0][0], false);
+	}
+
+}

@@ -1,0 +1,93 @@
+package com.emveyh.ld25.map;
+
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.math.Rectangle;
+import com.emveyh.ld25.Globals;
+import com.emveyh.ld25.entity.Entity;
+import com.emveyh.ld25.entity.EntityManager;
+import com.emveyh.ld25.entity.PlayerEntity;
+
+public class MapManager {
+
+	private static final MapManager INSTANCE = new MapManager();
+
+	public static MapManager getInstance() {
+		return MapManager.INSTANCE;
+	}
+
+	private MapManager() {
+	}
+
+	private Tile[][] map;
+	private Rectangle collisionRectangle;
+
+	public void init() {
+
+		map = new Tile[25][15];
+
+		for (int x = 0; x < map.length; x++) {
+			for (int y = 0; y < map[x].length; y++) {
+
+				if (x == 0 || y == 0 || x == map.length - 1
+						|| y == map[0].length - 1) {
+					map[x][y] = new WallTile(x, y);
+				} else {
+					map[x][y] = new FloorTile(x, y);
+				}
+
+				if (x == 5 && y == 5) {
+					map[x][y] = new WallTile(x, y);
+				}
+
+			}
+		}
+
+		// generate entities
+		PlayerEntity playerEntity = new PlayerEntity();
+		EntityManager.getInstance().registerEntity(playerEntity);
+
+	}
+
+	public Tile[][] getMap() {
+		return map;
+	}
+
+	public void renderMap(SpriteBatch batch) {
+
+		for (int x = 0; x < map.length; x++) {
+			for (int y = 0; y < map[x].length; y++) {
+				map[x][y].render(batch, x * 32, y * 32);
+			}
+		}
+
+	}
+
+	public Tile detectCollision(float x, float y, float width, float height,
+			Entity askingEntity) {
+		Tile result = null;
+		collisionRectangle = new Rectangle(x + 1, y + 1, width - 2, height - 2);
+
+		outer: for (int mapX = 0; mapX < map.length; mapX++) {
+			for (int mapY = 0; mapY < map[mapX].length; mapY++) {
+				if (map[mapX][mapY].overlaps(collisionRectangle)) {
+					if (!map[mapX][mapY].isAccessible()
+							|| map[mapX][mapY]
+									.occupiedByOtherEntity(askingEntity)) {
+						result = map[mapX][mapY];
+						break outer;
+					}
+				}
+			}
+		}
+
+		return result;
+	}
+
+	public Tile getTileAtFloatPoint(float x, float y) {
+
+		return map[(int) x / Globals.getInstance().getTileSize()][(int) y
+				/ Globals.getInstance().getTileSize()];
+
+	}
+
+}

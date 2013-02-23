@@ -1,0 +1,260 @@
+package com.emveyh.ld25.entity;
+
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.g2d.Sprite;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.utils.Array;
+import com.emveyh.ld25.Globals;
+import com.emveyh.ld25.MapCoord;
+import com.emveyh.ld25.map.MapManager;
+import com.emveyh.ld25.map.Tile;
+
+public class Entity extends Sprite {
+
+	private TextureRegion[] animationTextures;
+	private int currentAnimationIndex;
+	protected float speed;
+
+	private MapCoord currentDestination;
+	private Array<MapCoord> currentPath;
+	private int currentPathIndex = 0;
+
+	private float attackTime = 0;
+	private float attackTrigger = 1;
+	protected boolean canAttack;
+
+	private boolean moving = false;
+
+	protected int hp;
+	protected int currentHp;
+	protected int dmg;
+
+	public Entity(float x, float y, int hp, int dmg, TextureRegion... animationTextures) {
+		this.setX(x*Globals.getInstance().getTileSize());
+		this.setY(y*Globals.getInstance().getTileSize());
+		this.setSize(Globals.getInstance().getTileSize(), Globals.getInstance().getTileSize());
+		this.animationTextures = animationTextures;
+		this.changeAnimationTexture(0);
+		this.speed = 400f;
+		this.hp = hp;
+		this.currentHp = hp;
+		this.dmg = dmg;
+	}
+
+	protected void changeAnimationTexture(int index) {
+		this.currentAnimationIndex = index;
+		this.setRegion(animationTextures[index]);
+	}
+
+	public boolean moveHorizontal(float speed) {
+		this.setX(this.getX() + (speed * Gdx.graphics.getDeltaTime()));
+		moving = true;
+		return true;
+	}
+
+	public boolean moveVertical(float speed) {
+		this.setY(this.getY() + (speed * Gdx.graphics.getDeltaTime()));
+		this.moving = true;
+		return true;
+	}
+
+	public void moveToTile(int x, int y, float speed) {
+
+		moving = false;
+
+		Tile collisionTile = null;
+
+		if (this.getX() < x * Globals.getInstance().getTileSize()) {
+			collisionTile = MapManager.getInstance().detectCollision((int) (this.getX() + speed * Gdx.graphics.getDeltaTime()), (int) this.getY(),
+					Globals.getInstance().getTileSize(), Globals.getInstance().getTileSize(), this);
+
+			if (collisionTile == null) {
+				moveHorizontal(speed);
+				if (this.getX() + (speed * Gdx.graphics.getDeltaTime()) > x * Globals.getInstance().getTileSize()) {
+					this.setX(x * Globals.getInstance().getTileSize());
+				}
+
+			} else {
+				this.setX(collisionTile.getX() - Globals.getInstance().getTileSize());
+			}
+		} else if (this.getX() > x * Globals.getInstance().getTileSize()) {
+			collisionTile = MapManager.getInstance().detectCollision((int) this.getX() - speed * Gdx.graphics.getDeltaTime(), (int) this.getY(),
+					Globals.getInstance().getTileSize(), Globals.getInstance().getTileSize(), this);
+
+			if (collisionTile == null) {
+				moveHorizontal(-speed);
+				if (this.getX() - (speed * Gdx.graphics.getDeltaTime()) < x * Globals.getInstance().getTileSize() + Globals.getInstance().getTileSize()) {
+					// this.setX(x * Globals.getInstance().getTileSize());
+				}
+			} else {
+				this.setX(collisionTile.getX() + Globals.getInstance().getTileSize());
+			}
+		}
+
+		if (!moving) {
+			if (this.getY() > y * Globals.getInstance().getTileSize()) {
+				collisionTile = MapManager.getInstance().detectCollision((int) this.getX(), (int) this.getY() - speed * Gdx.graphics.getDeltaTime(),
+						Globals.getInstance().getTileSize(), Globals.getInstance().getTileSize(), this);
+
+				if (collisionTile == null) {
+					moveVertical(-speed);
+					if (this.getY() - speed * Gdx.graphics.getDeltaTime() < y * Globals.getInstance().getTileSize()) {
+						this.setY(y * Globals.getInstance().getTileSize());
+					}
+				} else {
+					this.setY(collisionTile.getY() + Globals.getInstance().getTileSize());
+				}
+			} else if (this.getY() < y * Globals.getInstance().getTileSize()) {
+				collisionTile = MapManager.getInstance().detectCollision((int) this.getX(), (int) (this.getY() + speed * Gdx.graphics.getDeltaTime()),
+						Globals.getInstance().getTileSize(), Globals.getInstance().getTileSize(), this);
+
+				if (collisionTile == null) {
+					moveVertical(speed);
+					if (this.getY() + (speed * Gdx.graphics.getDeltaTime()) > y * Globals.getInstance().getTileSize()) {
+						this.setY(y * Globals.getInstance().getTileSize());
+					}
+				} else {
+					this.setY(collisionTile.getY() - Globals.getInstance().getTileSize());
+				}
+			}
+		}
+
+	}
+
+	public void tick() {
+
+		if (this.getCurrentHp() > 0) {
+
+			if (attackTime < attackTrigger) {
+				canAttack = false;
+				attackTime += Gdx.graphics.getDeltaTime();
+			} else {
+				canAttack = true;
+				attackTime = 0;
+			}
+
+			if (currentPath != null && currentPath.size > 0 && currentDestination == null) {
+				currentDestination = currentPath.get(currentPathIndex);
+				if (currentPathIndex == currentPath.size - 1) {
+					currentPath = null;
+				} else {
+					currentPathIndex++;
+				}
+			}
+
+			if (currentDestination != null) {
+				this.moveToTile(currentDestination.getX(), currentDestination.getY(), this.speed);
+				if (this.getX() == currentDestination.getX() * Globals.getInstance().getTileSize()
+						&& this.getY() == currentDestination.getY() * Globals.getInstance().getTileSize()) {
+					currentDestination = null;
+				}
+			}
+
+			MapManager.getInstance().getTileAtFloatPoint(this.getX(), this.getY()).setEntity(this);
+
+			tickLogic();
+		} else {
+			onDeath();
+		}
+	}
+
+	public void move(MapCoord destination) {
+		this.currentPath = AiManager.getInstance().aStar(
+				new MapCoord((int) this.getX() / Globals.getInstance().getTileSize(), (int) this.getY() / Globals.getInstance().getTileSize()), destination,
+				this);
+		this.currentPathIndex = 0;
+	}
+
+	protected void tickLogic() {
+
+	}
+
+	public Array<Tile> getSurroundingTiles() {
+
+		Array<Tile> surroundingTiles = new Array<Tile>();
+
+		if (this.getX() > 0) {
+			surroundingTiles.add(MapManager.getInstance().getMap()[(int) (this.getX() / Globals.getInstance().getTileSize()) - 1][(int) this.getY()
+					/ Globals.getInstance().getTileSize()]);
+		}
+		if (this.getX() < MapManager.getInstance().getMap().length * Globals.getInstance().getTileSize()) {
+			surroundingTiles.add(MapManager.getInstance().getMap()[(int) (this.getX() / Globals.getInstance().getTileSize()) + 1][(int) this.getY()
+					/ Globals.getInstance().getTileSize()]);
+		}
+		if (this.getY() > 0) {
+			surroundingTiles.add(MapManager.getInstance().getMap()[(int) (this.getX() / Globals.getInstance().getTileSize())][(int) (this.getY() / Globals
+					.getInstance().getTileSize()) - 1]);
+		}
+		if (this.getY() < MapManager.getInstance().getMap()[0].length * Globals.getInstance().getTileSize()) {
+			surroundingTiles.add(MapManager.getInstance().getMap()[(int) (this.getX() / Globals.getInstance().getTileSize())][(int) (this.getY() / Globals
+					.getInstance().getTileSize()) + 1]);
+		}
+
+		return surroundingTiles;
+	}
+
+	public Array<Entity> getSurroundingEntities() {
+
+		Array<Entity> surroundingEntities = new Array<Entity>();
+
+		Array<Tile> surroundingTiles = getSurroundingTiles();
+		for (Tile tile : surroundingTiles) {
+			if (tile.getEntity() != null && tile.getEntity() != this) {
+				surroundingEntities.add(tile.getEntity());
+			}
+		}
+
+		return surroundingEntities;
+	}
+
+	
+	
+	public Array<MapCoord> getCurrentPath() {
+		return currentPath;
+	}
+
+	public void onSelection() {
+
+	}
+
+	public int getCurrentAnimationIndex() {
+		return currentAnimationIndex;
+	}
+
+	public void setCurrentAnimationIndex(int currentAnimationIndex) {
+		this.currentAnimationIndex = currentAnimationIndex;
+	}
+
+	public int getHp() {
+		return hp;
+	}
+
+	public void setHp(int hp) {
+		this.hp = hp;
+	}
+
+	public int getCurrentHp() {
+		return currentHp;
+	}
+
+	public void setCurrentHp(int currentHp) {
+		this.currentHp = currentHp;
+	}
+
+	public int getDmg() {
+		return dmg;
+	}
+
+	public void setDmg(int dmg) {
+		this.dmg = dmg;
+	}
+
+	public void onHit(Entity entity) {
+
+	}
+
+	public void onDeath() {
+
+	}
+
+}

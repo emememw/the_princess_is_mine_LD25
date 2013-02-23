@@ -1,0 +1,135 @@
+package com.emveyh.ld25.entity;
+
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.g2d.Sprite;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.emveyh.ld25.Coord;
+import com.emveyh.ld25.Globals;
+import com.emveyh.ld25.map.MapManager;
+import com.emveyh.ld25.map.Tile;
+
+public class Entity extends Sprite {
+
+	private TextureRegion[] animationTextures;
+	protected float speed;
+
+	private Coord destination;
+	
+	private boolean moving = false;
+
+	public Entity(float x, float y, TextureRegion... animationTextures) {
+		this.setX(x);
+		this.setY(y);
+		this.setSize(Globals.getInstance().getTileSize(), Globals.getInstance()
+				.getTileSize());
+		this.animationTextures = animationTextures;
+		this.changeAnimationTexture(0);
+		this.speed = 200f;
+	}
+
+	protected void changeAnimationTexture(int index) {
+		this.setRegion(animationTextures[index]);
+	}
+
+	public boolean moveHorizontal(float speed) {
+		this.setX(this.getX() + (speed * Gdx.graphics.getDeltaTime()));
+		moving = true;
+		return true;
+	}
+
+	public boolean moveVertical(float speed) {
+		this.setY(this.getY() + (speed * Gdx.graphics.getDeltaTime()));
+		this.moving = true;
+		return true;
+	}
+
+	public void moveToTile(int x, int y, float speed) {
+
+		moving = false;
+		
+		Tile collisionTile = null;
+		
+		if (this.getX() < x * Globals.getInstance().getTileSize()) {
+			collisionTile = MapManager.getInstance().detectCollision((int)(this.getX()+speed*Gdx.graphics.getDeltaTime()), (int)this.getY(), Globals.getInstance().getTileSize(), Globals.getInstance().getTileSize());
+			
+			if(collisionTile == null) {
+				moveHorizontal(speed);
+				if (this.getX() + (speed * Gdx.graphics.getDeltaTime()) > x
+						* Globals.getInstance().getTileSize()) {
+					this.setX(x * Globals.getInstance().getTileSize());
+				}
+			}  else {
+				this.setX(collisionTile.getX()-Globals.getInstance().getTileSize());
+			}
+		} else if (this.getX() > x * Globals.getInstance().getTileSize()) {
+			collisionTile = MapManager.getInstance().detectCollision((int)this.getX()-speed*Gdx.graphics.getDeltaTime(),(int) this.getY(), Globals.getInstance().getTileSize(), Globals.getInstance().getTileSize());
+			
+			if(collisionTile == null) {
+			moveHorizontal(-speed);
+			if (this.getX() - (speed * Gdx.graphics.getDeltaTime()) < x
+					* Globals.getInstance().getTileSize()+Globals.getInstance().getTileSize()) {
+				//this.setX(x * Globals.getInstance().getTileSize());
+			}
+			} else {
+				this.setX(collisionTile.getX()+Globals.getInstance().getTileSize());
+			}
+		} 
+		
+		if(!moving) {
+			if (this.getY() > y * Globals.getInstance().getTileSize()) {
+				collisionTile = MapManager.getInstance().detectCollision((int)this.getX(), (int)this.getY()-speed*Gdx.graphics.getDeltaTime(), Globals.getInstance().getTileSize(), Globals.getInstance().getTileSize());
+				
+				if (collisionTile == null) {
+				moveVertical(-speed);
+				if (this.getY() - speed * Gdx.graphics.getDeltaTime() < y
+						* Globals.getInstance().getTileSize()) {
+					this.setY(y * Globals.getInstance().getTileSize());
+				}
+				} else {
+					this.setY(collisionTile.getY()+Globals.getInstance().getTileSize());
+				}
+			} else if (this.getY() < y * Globals.getInstance().getTileSize()) {
+				collisionTile = MapManager.getInstance().detectCollision((int)this.getX(), (int)(this.getY()+speed*Gdx.graphics.getDeltaTime()), Globals.getInstance().getTileSize(), Globals.getInstance().getTileSize());
+				
+				if (collisionTile == null) {
+				moveVertical(speed);
+				if (this.getY() + (speed * Gdx.graphics.getDeltaTime()) > y
+						* Globals.getInstance().getTileSize()) {
+					this.setY(y * Globals.getInstance().getTileSize());
+				}
+				} else {
+					this.setY(collisionTile.getY()-Globals.getInstance().getTileSize());
+				}
+			}
+		}
+		
+
+		
+
+	}
+
+	public void tick() {
+
+		if (destination != null) {
+			this.moveToTile((int) destination.getX()
+					/ Globals.getInstance().getTileSize(),
+					(int) destination.getY()
+							/ Globals.getInstance().getTileSize(), this.speed);
+		}
+
+		tickLogic();
+	}
+
+	protected void tickLogic() {
+
+	}
+
+	public Coord getDestination() {
+		return destination;
+	}
+
+	public void setDestination(Coord destination) {
+		this.destination = destination;
+	}
+
+}

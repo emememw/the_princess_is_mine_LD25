@@ -1,0 +1,48 @@
+package com.emveyh.ld25.entity;
+
+import com.badlogic.gdx.utils.Array;
+import com.emveyh.ld25.MapCoord;
+import com.emveyh.ld25.TextureManager;
+import com.emveyh.ld25.map.MapManager;
+
+public class BasicEnemy extends Entity {
+
+	public BasicEnemy(float x, float y) {
+		super(x, y, 5, 5, TextureManager.getInstance().getSprites()[1][0]);
+		this.move(new MapCoord(12, 6));
+		this.speed = 50;
+	}
+
+	@Override
+	public void tickLogic() {
+
+		if (canAttack) {
+			Array<Entity> surroundingEntities = this.getSurroundingEntities();
+			if (surroundingEntities.size > 0) {
+				for (Entity entity : surroundingEntities) {
+					if (entity instanceof PlayerEntity) {
+						entity.onHit(this);
+						break;
+					}
+				}
+			}
+
+		}
+		
+		
+
+	}
+
+	@Override
+	public void onHit(Entity entity) {
+
+		this.currentHp -= entity.getDmg();
+		System.out.println(this.currentHp);
+	}
+
+	@Override
+	public void onDeath() {
+		EntityManager.getInstance().unregisterEntity(this);
+	}
+
+}

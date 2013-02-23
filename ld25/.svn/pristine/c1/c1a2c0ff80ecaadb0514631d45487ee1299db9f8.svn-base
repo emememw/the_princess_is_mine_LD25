@@ -1,0 +1,136 @@
+package com.emveyh.ld25.map;
+
+import javax.swing.plaf.basic.BasicEditorPaneUI;
+
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.math.Rectangle;
+import com.emveyh.ld25.Globals;
+import com.emveyh.ld25.entity.BasicEnemy;
+import com.emveyh.ld25.entity.Entity;
+import com.emveyh.ld25.entity.EntityManager;
+import com.emveyh.ld25.entity.PlayerEntity;
+import com.emveyh.ld25.entity.PrincessInACage;
+
+public class MapManager {
+
+	private static final MapManager INSTANCE = new MapManager();
+
+	public static MapManager getInstance() {
+		return MapManager.INSTANCE;
+	}
+
+	private MapManager() {
+	}
+
+	private Tile[][] map;
+	private Rectangle collisionRectangle;
+	
+	private float spawnTime = 0;
+	private float spawnTrigger = 3f;
+	
+	private int enemyCount = 0;
+
+	public void init() {
+
+		map = new Tile[25][13];
+
+		for (int x = 0; x < map.length; x++) {
+			for (int y = 0; y < map[x].length; y++) {
+
+				if ((x == 0 || y == 0 || x == map.length - 1
+						|| y == map[0].length - 1) && x != 11 && x != 12 && x != 13 && y != 6 && y != 5 && y != 7) {
+					map[x][y] = new WallTile(x, y);
+				} else {
+					map[x][y] = new FloorTile(x, y);
+				}
+
+				if (x == 5 && y == 5) {
+					map[x][y] = new WallTile(x, y);
+				}
+
+			}
+		}
+
+		// generate entities
+		//player
+		EntityManager.getInstance().registerEntity(new PlayerEntity(9, 7, "nr1"));
+		EntityManager.getInstance().registerEntity(new PlayerEntity(22, 7, "nr2"));
+		EntityManager.getInstance().registerEntity(new PlayerEntity(22, 8, "nr3"));
+		
+		//princess
+		EntityManager.getInstance().registerEntity(new PrincessInACage());
+		
+		
+	}
+
+	public Tile[][] getMap() {
+		return map;
+	}
+
+	public void renderMap(SpriteBatch batch) {
+
+		for (int x = 0; x < map.length; x++) {
+			for (int y = 0; y < map[x].length; y++) {
+				map[x][y].render(batch, x * 32, y * 32);
+			}
+		}
+
+	}
+
+	public Tile detectCollision(float x, float y, float width, float height,
+			Entity askingEntity) {
+		Tile result = null;
+		collisionRectangle = new Rectangle(x + 1, y + 1, width - 2, height - 2);
+
+		outer: for (int mapX = 0; mapX < map.length; mapX++) {
+			for (int mapY = 0; mapY < map[mapX].length; mapY++) {
+				if (map[mapX][mapY].overlaps(collisionRectangle)) {
+					if (!map[mapX][mapY].isAccessible()
+							|| map[mapX][mapY]
+									.occupiedByOtherEntity(askingEntity)) {
+						result = map[mapX][mapY];
+						break outer;
+					}
+				}
+			}
+		}
+
+		return result;
+	}
+
+	public Tile getTileAtFloatPoint(float x, float y) {
+		//@TODO check
+		return map[(int) x / Globals.getInstance().getTileSize()][(int) y
+				/ Globals.getInstance().getTileSize()];
+
+	}
+	
+	public void tick() {
+		
+		for(int x = 0; x < map.length; x++) {
+			for(int y = 0; y < map[x].length; y++) {
+				
+				map[x][y].tick();
+				
+			}
+		}
+		
+		if(spawnTime < spawnTrigger) {
+			spawnTime += Gdx.graphics.getDeltaTime();
+		} else {
+			spawnTime = 0;
+			spawnEnemy();
+		}
+		
+	}
+	
+	public void spawnEnemy() {
+		if(enemyCount < 100) {
+		EntityManager.getInstance().registerEntity(new BasicEnemy(0, 6));
+		enemyCount++;
+		} 
+		
+	}
+
+}
